@@ -2,18 +2,7 @@
 
 import { prisma } from './db';
 import { revalidatePath } from 'next/cache';
-
-async function emitUpdate(quizId: string) {
-  try {
-    await fetch('http://localhost:4000/emit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ quizId, event: 'quiz-update', data: {} })
-    });
-  } catch (error) {
-    console.error('Failed to emit update:', error);
-  }
-}
+import { emitUpdate } from './emitUpdate';
 
 export async function handleBuzzerAnswerTimerExpiry(quizId: string) {
   const quiz = await prisma.quiz.findUnique({ where: { id: quizId }, include: { teams: true } });

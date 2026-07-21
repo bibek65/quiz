@@ -1,0 +1,151 @@
+{
+  "domains": [
+    {
+      "name": "Compute & Containers",
+      "questions": [
+        {
+          "question": "Which AWS service is used to run containerized applications?",
+          "options": ["Amazon ECS", "Amazon S3", "Amazon DynamoDB", "Amazon CloudWatch"],
+          "correctAnswer": "A"
+        },
+        {
+          "question": "What is the maximum duration for an AWS Lambda function execution by default?",
+          "options": ["5 minutes", "15 minutes", "1 hour", "12 hours"],
+          "correctAnswer": "B"
+        },
+        {
+          "question": "Which Amazon EC2 instance type is optimized for compute-intensive workloads?",
+          "options": ["T3", "M5", "C5", "R5"],
+          "correctAnswer": "C"
+        },
+        {
+          "question": "What is the purpose of Amazon ECR?",
+          "options": ["Container registry", "Serverless functions", "Message queue", "DNS service"],
+          "correctAnswer": "A"
+        },
+        {
+          "question": "Which service enables serverless container running?",
+          "options": ["AWS Fargate", "Amazon Lightsail", "AWS Batch", "Elastic Beanstalk"],
+          "correctAnswer": "A"
+        },
+        {
+          "question": "What is the minimum number of nodes in an Amazon EKS cluster?",
+          "options": ["1", "2", "3", "No minimum"],
+          "correctAnswer": "D"
+        }
+      ]
+    },
+    {
+      "name": "CI/CD & Automation",
+      "questions": [
+        {
+          "question": "Which AWS service is used for continuous integration and delivery?",
+          "options": ["AWS CodePipeline", "AWS SQS", "AWS SNS", "AWS SWF"],
+          "correctAnswer": "A"
+        },
+        {
+          "question": "What file defines buildspec settings for AWS CodeBuild?",
+          "options": ["buildspec.yml", "Dockerfile", "package.json", "Makefile"],
+          "correctAnswer": "A"
+        },
+        {
+          "question": "Which AWS service automates code deployments to AWS services?",
+          "options": ["CodeDeploy", "CloudFormation", "OpsWorks", "Service Catalog"],
+          "correctAnswer": "A"
+        },
+        {
+          "question": "What is AWS CodeArtifact used for?",
+          "options": ["Package management", "Video transcoding", "Email sending", "Logging"],
+          "correctAnswer": "A"
+        },
+        {
+          "question": "Which service provides a complete CI/CD pipeline?",
+          "options": ["CodePipeline", "CodeCommit", "CodeBuild", "CodeStar"],
+          "correctAnswer": "A"
+        },
+        {
+          "question": "What is the purpose of AWS CodeStar?",
+          "options": ["DevOps tooling", "Video streaming", "Database migration", "Edge computing"],
+          "correctAnswer": "A"
+        }
+      ]
+    },
+    {
+      "name": "Security & IAM",
+      "questions": [
+        {
+          "question": "What is the AWS service for identity and access management?",
+          "options": ["AWS IAM", "Amazon GuardDuty", "AWS Shield", "AWS WAF"],
+          "correctAnswer": "A"
+        },
+        {
+          "question": "Which IAM feature enables temporary access to AWS resources?",
+          "options": ["IAM Roles", "IAM Users", "IAM Groups", "IAM Policies"],
+          "correctAnswer": "A"
+        },
+        {
+          "question": "What is AWS Secrets Manager used for?",
+          "options": ["Store secrets", "VPN connections", "Content delivery", "Email forwarding"],
+          "correctAnswer": "A"
+        },
+        {
+          "question": "Which service provides DDoS protection?",
+          "options": ["AWS Shield", "AWS WAF", "Amazon Inspector", "AWS Config"],
+          "correctAnswer": "A"
+        },
+        {
+          "question": "What is the principle of least privilege?",
+          "options": ["Minimum required permissions", "Maximum storage", "Fastest performance", "Lowest cost"],
+          "correctAnswer": "A"
+        },
+        {
+          "question": "Which AWS service monitors API calls?",
+          "options": ["CloudTrail", "CloudWatch", "X-Ray", "Inspector"],
+          "correctAnswer": "A"
+        }
+      ]
+    }
+  ],
+  "buzzerQuestions": [
+    {
+      "question": "What does ECS stand for in AWS?",
+      "answer": "Elastic Container Service"
+    },
+    {
+      "question": "What is the maximum timeout for Lambda?",
+      "answer": "15 minutes"
+    },
+    {
+      "question": "Which AWS service provides serverless functions?",
+      "answer": "Lambda"
+    },
+    {
+      "question": "What is the purpose of Amazon EKS?",
+      "answer": "Elastic Kubernetes Service"
+    },
+    {
+      "question": "Which service stores container images?",
+      "answer": "ECR"
+    },
+    {
+      "question": "What is Fargate?",
+      "answer": "Serverless compute for containers"
+    },
+    {
+      "question": "What does CodePipeline do?",
+      "answer": "Continuous delivery service"
+    },
+    {
+      "question": "What is CodeBuild?",
+      "answer": "Continuous integration service"
+    },
+    {
+      "question": "What is the purpose of IAM?",
+      "answer": "Identity and Access Management"
+    },
+    {
+      "question": "What does MFA stand for?",
+      "answer": "Multi-Factor Authentication"
+    }
+  ]
+}

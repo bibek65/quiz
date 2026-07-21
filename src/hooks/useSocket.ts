@@ -19,8 +19,10 @@ export function useSocket(quizId: string) {
     }
 
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:4000';
+    const socketPath = process.env.NEXT_PUBLIC_SOCKET_PATH || '/socket.io';
     socketRef.current = io(socketUrl, {
-      forceNew: true, // Force new connection to avoid reusing
+      path: socketPath,
+      forceNew: true,
       transports: ['websocket', 'polling']
     });
 

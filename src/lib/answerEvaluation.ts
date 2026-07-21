@@ -2,18 +2,7 @@
 
 import { prisma } from './db';
 import { revalidatePath } from 'next/cache';
-
-async function emitUpdate(quizId: string) {
-  try {
-    await fetch('http://localhost:4000/emit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ quizId, event: 'quiz-update', data: {} })
-    });
-  } catch (error) {
-    console.error('Failed to emit update:', error);
-  }
-}
+import { emitUpdate } from './emitUpdate';
 
 async function revalidateQuizPaths(quizId: string) {
   revalidatePath(`/quiz/${quizId}/host`);
@@ -22,7 +11,7 @@ async function revalidateQuizPaths(quizId: string) {
   revalidatePath(`/quiz/${quizId}/team`);
 }
 
-// Evaluate domain answer manually
+// Evaluate domain answer manually - NEW FLOW
 export async function evaluateDomainAnswer(
   quizId: string,
   teamId: string,
@@ -37,14 +26,13 @@ export async function evaluateDomainAnswer(
   
   if (!quiz || !question) return { success: false, error: 'Not found' };
   
-  const teamCount = quiz.teams.length;
   const withOptions = question.optionsViewed || question.optionsDefault;
   
   let points = 0;
   if (evaluation === 'correct') {
-    points = withOptions ? 5 : 10;
+    points = 10; // Always 10 points for correct
   } else {
-    points = withOptions ? -5 : 0;
+    points = 0; // No negative marking
   }
   
   await prisma.team.update({
@@ -52,100 +40,40 @@ export async function evaluateDomainAnswer(
     data: { score: { increment: points } }
   });
   
-  const existingAnswers = (quiz.lastDomainAnswer as any)?.allAnswers || [];
-  const teamAnswer = existingAnswers.find((a: any) => a.teamId === teamId) || {};
+  // Mark question as answered
+  await prisma.question.update({ 
+    where: { id: questionId }, 
+    data: { isAnswered: true, correctAnswer: question.answer } 
+  });
   
-  const updatedAnswer = {
-    ...teamAnswer,
+  // Preserve existing allAnswers from the submitted answer
+  const existingAnswers = (quiz.lastDomainAnswer as any)?.allAnswers || [];
+  
+  const answerResult = {
+    teamId,
+    answer: '',
     isCorrect: evaluation === 'correct',
     points,
-    evaluated: true
+    withOptions,
+    wasTabActive: true,
+    questionId: question.id,
+    questionText: question.text,
+    correctAnswer: question.answer,
+    options: question.options,
+    questionCompleted: true,
+    evaluated: true,
+    allAnswers: existingAnswers
   };
-
-  // Check if we should pass to next team (incorrect answer without options)
-  const shouldPassToNextTeam = evaluation === 'incorrect' && !question.optionsViewed && !question.optionsDefault;
   
-  if (shouldPassToNextTeam) {
-    const attemptedTeams = [...new Set([...(question.attemptedBy || []), teamId])];
-    let nextAnswerTurnIndex = quiz.answerTurnIndex;
-    let nextTeamId = null;
-    let foundNextTeam = false;
-    
-    for (let i = 1; i <= teamCount; i++) {
-      const candidateIndex = (quiz.answerTurnIndex + i) % teamCount;
-      const candidateTeamId = quiz.teams[candidateIndex]?.id;
-      if (candidateTeamId && !attemptedTeams.includes(candidateTeamId)) {
-        nextTeamId = candidateTeamId;
-        nextAnswerTurnIndex = candidateIndex;
-        foundNextTeam = true;
-        break;
-      }
+  // Show result - nextDomainQuestion will handle rotation
+  await prisma.quiz.update({
+    where: { id: quizId },
+    data: { 
+      phase: 'showing_result', 
+      timerEndsAt: null, 
+      lastDomainAnswer: answerResult 
     }
-    
-    const answerResult = {
-      teamId,
-      answer: teamAnswer.answer || '',
-      isCorrect: false,
-      points: 0,
-      withOptions: teamAnswer.withOptions || false,
-      wasTabActive: teamAnswer.wasTabActive !== false,
-      questionText: question.text,
-      correctAnswer: question.answer,
-      questionCompleted: !foundNextTeam,
-      evaluated: true,
-      allAnswers: [...existingAnswers.filter((a: any) => a.teamId !== teamId), updatedAnswer]
-    };
-    
-    if (foundNextTeam && nextTeamId) {
-      await prisma.question.update({ 
-        where: { id: questionId }, 
-        data: { passedFrom: question.passedFrom || teamId, attemptedBy: { push: teamId } } 
-      });
-      await prisma.quiz.update({ 
-        where: { id: quizId }, 
-        data: { 
-          currentTeamId: nextTeamId, 
-          phase: 'answering', 
-          timerEndsAt: new Date(Date.now() + 30000), 
-          answerTurnIndex: nextAnswerTurnIndex, 
-          lastDomainAnswer: answerResult 
-        } 
-      });
-    } else {
-      await prisma.question.update({ 
-        where: { id: questionId }, 
-        data: { isAnswered: true, correctAnswer: question.answer, attemptedBy: { push: teamId } } 
-      });
-      const newQuestionsInDomain = quiz.questionsInDomain + 1;
-      await prisma.quiz.update({
-        where: { id: quizId },
-        data: { phase: 'showing_result', timerEndsAt: null, questionsInDomain: newQuestionsInDomain, lastDomainAnswer: answerResult }
-      });
-    }
-  } else {
-    // Correct or incorrect with options - mark question as answered
-    await prisma.question.update({ where: { id: questionId }, data: { isAnswered: true } });
-    
-    const answerResult = {
-      teamId,
-      answer: teamAnswer.answer || '',
-      isCorrect: evaluation === 'correct',
-      points,
-      withOptions: teamAnswer.withOptions || false,
-      wasTabActive: teamAnswer.wasTabActive !== false,
-      questionText: question.text,
-      correctAnswer: question.answer,
-      questionCompleted: true,
-      evaluated: true,
-      allAnswers: [...existingAnswers.filter((a: any) => a.teamId !== teamId), updatedAnswer]
-    };
-    
-    const newQuestionsInDomain = quiz.questionsInDomain + 1;
-    await prisma.quiz.update({
-      where: { id: quizId },
-      data: { phase: 'showing_result', timerEndsAt: null, questionsInDomain: newQuestionsInDomain, lastDomainAnswer: answerResult }
-    });
-  }
+  });
   
   revalidateQuizPaths(quizId);
   emitUpdate(quizId);
@@ -198,14 +126,14 @@ export async function completeEvaluation(quizId: string) {
       const isFirstBuzzer = i === 0;
       
       if (!teamAnswer || !teamAnswer.evaluated) {
-        const points = isFirstBuzzer ? -10 : -5;
+        const points = -2;
         results[teamId] = { answer: '', isCorrect: false, points, timeout: true };
         await prisma.team.update({ where: { id: teamId }, data: { score: { increment: points } } });
         continue;
       }
       
       if (teamAnswer.evaluation === 'correct') {
-        const points = 10;
+        const points = 2;
         results[teamId] = { ...teamAnswer, isCorrect: true, points };
         await prisma.team.update({ where: { id: teamId }, data: { score: { increment: points } } });
         
@@ -217,7 +145,7 @@ export async function completeEvaluation(quizId: string) {
         }
         break;
       } else {
-        const points = isFirstBuzzer ? -10 : -5;
+        const points = -2;
         results[teamId] = { ...teamAnswer, isCorrect: false, points };
         await prisma.team.update({ where: { id: teamId }, data: { score: { increment: points } } });
       }

@@ -2,7 +2,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
       args:
         - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-http://192.168.16.132:8080}
         - NEXT_PUBLIC_SOCKET_PATH=${NEXT_PUBLIC_SOCKET_PATH:-/socket.io}
@@ -14,13 +14,20 @@ services:
       - NEXT_PUBLIC_SOCKET_PATH=${NEXT_PUBLIC_SOCKET_PATH:-/socket.io}
       - SOCKET_EMIT_URL=http://socket:4000/emit
       - ALLOWED_ORIGIN=${ALLOWED_ORIGIN:-*}
-      - NODE_ENV=${NODE_ENV:-development}
+      - NODE_ENV=development
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    command: npm run dev
     depends_on:
       - postgres
       - socket
     restart: unless-stopped
     networks:
       - quiz-network
+    ports:
+      - "3000:3000"
 
   socket:
     build:
@@ -29,6 +36,10 @@ services:
     environment:
       - PORT=4000
       - ALLOWED_ORIGIN=${ALLOWED_ORIGIN:-*}
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: node socket-server.js
     restart: unless-stopped
     networks:
       - quiz-network

@@ -1,0 +1,19 @@
+[Unit]
+Description=Quiz App Next.js Server
+After=network.target
+
+[Service]
+Type=simple
+User=quizapp
+WorkingDirectory=/opt/quizapp
+Environment=NODE_ENV=production
+EnvironmentFile=/opt/quizapp/.env.production
+ExecStart=/usr/bin/node /opt/quizapp/server.js
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=quiz-app
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,30 @@
+FROM node:20-alpine
+
+RUN apk add --no-cache openssl
+
+WORKDIR /app
+
+# Copy package files and prisma first
+COPY package*.json ./
+COPY prisma ./prisma/
+
+# Install dependencies (skip postinstall for now)
+RUN npm install --ignore-scripts
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Copy rest of the app
+COPY . .
+
+# Pass build arguments
+ARG NEXT_PUBLIC_SOCKET_URL
+ARG NEXT_PUBLIC_SOCKET_PATH
+
+ENV NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL}
+ENV NEXT_PUBLIC_SOCKET_PATH=${NEXT_PUBLIC_SOCKET_PATH}
+
+EXPOSE 3000
+
+# Run in development mode with hot reload
+CMD ["npm", "run", "dev"]

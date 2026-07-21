@@ -34,7 +34,7 @@ export default function ControlDashboard({ quiz }: { quiz: any }) {
 
   return (
     <div className="min-h-screen p-4 md:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         {/* Header */}
         <Card variant="elevated">
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
@@ -104,12 +104,38 @@ export default function ControlDashboard({ quiz }: { quiz: any }) {
               <div className="grid md:grid-cols-2 gap-4">
                 <Card variant="success">
                   <p className="text-sm text-slate-400 mb-2">Correct Answer</p>
-                  <p className="text-lg font-semibold text-emerald-300">{quiz.lastDomainAnswer.correctAnswer}</p>
+                  {(() => {
+                    const currentQ = quiz.domains?.flatMap((d: any) => d.questions || []).find((q: any) => q.id === quiz.currentQuestionId);
+                    const correctOptionIndex = currentQ?.options?.findIndex((o: string) => o === quiz.lastDomainAnswer.correctAnswer);
+                    return (
+                      <p className="text-lg font-semibold text-emerald-300">
+                        {correctOptionIndex !== undefined && correctOptionIndex >= 0 && (
+                          <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500 text-white mr-2 text-base">
+                            {String.fromCharCode(65 + correctOptionIndex)}
+                          </span>
+                        )}
+                        {quiz.lastDomainAnswer.correctAnswer}
+                      </p>
+                    );
+                  })()}
                 </Card>
                 
                 <Card variant="info">
                   <p className="text-sm text-slate-400 mb-2">Team's Answer</p>
-                  <p className="text-lg font-semibold text-blue-300">{quiz.lastDomainAnswer.answer}</p>
+                  {(() => {
+                    const currentQ = quiz.domains?.flatMap((d: any) => d.questions || []).find((q: any) => q.id === quiz.currentQuestionId);
+                    const teamOptionIndex = currentQ?.options?.findIndex((o: string) => o === quiz.lastDomainAnswer.answer);
+                    return (
+                      <p className="text-lg font-semibold text-blue-300">
+                        {teamOptionIndex !== undefined && teamOptionIndex >= 0 && (
+                          <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-500 text-white mr-2 text-base">
+                            {String.fromCharCode(65 + teamOptionIndex)}
+                          </span>
+                        )}
+                        {quiz.lastDomainAnswer.answer}
+                      </p>
+                    );
+                  })()}
                   <p className="text-xs text-slate-500 mt-2">
                     Team: {quiz.teams.find((t: any) => t.id === quiz.lastDomainAnswer.teamId)?.name}
                   </p>
@@ -117,40 +143,35 @@ export default function ControlDashboard({ quiz }: { quiz: any }) {
               </div>
               
               <div className="grid grid-cols-2 gap-3 md:gap-4">
-                {(() => {
-                  const withOpts = quiz.lastDomainAnswer.withOptions;
-                  return (
-                    <>
-                      <Button
-                        variant="success"
-                        size="lg"
-                        icon={<Check className="w-5 h-5 md:w-6 md:h-6" />}
-                        onClick={async () => {
-                          await evaluateDomainAnswer(quiz.id, quiz.lastDomainAnswer.teamId, quiz.currentQuestionId, 'correct');
-                          router.refresh();
-                        }}
-                        className="flex-col py-6"
-                      >
-                        <span className="text-sm md:text-base">Correct</span>
-                        <span className="text-xs">{withOpts ? '+5' : '+10'}</span>
-                      </Button>
-                      
-                      <Button
-                        variant="danger"
-                        size="lg"
-                        icon={<X className="w-5 h-5 md:w-6 md:h-6" />}
-                        onClick={async () => {
-                          await evaluateDomainAnswer(quiz.id, quiz.lastDomainAnswer.teamId, quiz.currentQuestionId, 'incorrect');
-                          router.refresh();
-                        }}
-                        className="flex-col py-6"
-                      >
-                        <span className="text-sm md:text-base">Incorrect</span>
-                        <span className="text-xs">{withOpts ? '-5' : '0'}</span>
-                      </Button>
-                    </>
-                  );
-                })()}
+                <>
+                  <Button
+                    variant="success"
+                    size="lg"
+                    icon={<Check className="w-5 h-5 md:w-6 md:h-6" />}
+                    onClick={async () => {
+                      await evaluateDomainAnswer(quiz.id, quiz.lastDomainAnswer.teamId, quiz.currentQuestionId, 'correct');
+                      router.refresh();
+                    }}
+                    className="flex-col py-6"
+                  >
+                    <span className="text-sm md:text-base">Correct</span>
+                    <span className="text-xs">+10</span>
+                  </Button>
+                  
+                  <Button
+                    variant="danger"
+                    size="lg"
+                    icon={<X className="w-5 h-5 md:w-6 md:h-6" />}
+                    onClick={async () => {
+                      await evaluateDomainAnswer(quiz.id, quiz.lastDomainAnswer.teamId, quiz.currentQuestionId, 'incorrect');
+                      router.refresh();
+                    }}
+                    className="flex-col py-6"
+                  >
+                    <span className="text-sm md:text-base">Incorrect</span>
+                    <span className="text-xs">0</span>
+                  </Button>
+                </>
               </div>
             </div>
           )}

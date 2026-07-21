@@ -32,7 +32,7 @@ export default function HostSessionManager({ quizzes }: { quizzes: any[] }) {
 
   return (
     <div className="min-h-screen p-4">
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-xl p-6">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold"> Quiz Sessions</h1>

@@ -69,7 +69,7 @@ export default function HostDashboard({ quiz }: { quiz: any }) {
 
   return (
     <div className="min-h-screen p-4">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-xl p-6">
           <div className="mb-4">
             <h1 className="text-3xl font-bold"> Host Dashboard</h1>
@@ -363,7 +363,7 @@ export default function HostDashboard({ quiz }: { quiz: any }) {
               <label htmlFor="optionsDefault" className="text-sm font-medium">
                 <span className="text-blue-300">Options enabled by default</span>
                 <div className="text-xs text-slate-400 mt-1">
-                  Multiple choice question: Shows options automatically, cannot be passed, +10 correct / -5 incorrect
+                  Multiple choice question: Shows options automatically, cannot be passed, +10 correct / 0 incorrect
                 </div>
               </label>
             </div>

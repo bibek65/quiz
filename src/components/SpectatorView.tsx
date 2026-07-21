@@ -1,7 +1,7 @@
 'use client';
 
-import { Clock, Award, Trophy, Eye, BookOpen, HelpCircle } from 'lucide-react';
-import { useEffect, useState, useRef } from 'react';
+import { Clock, Award, Trophy, Eye, BookOpen, HelpCircle, GripVertical } from 'lucide-react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { io } from 'socket.io-client';
 import Card from '@/components/ui/Card';
@@ -68,8 +68,44 @@ export default function SpectatorView({ quiz: initialQuiz }: { quiz: Quiz }) {
   const [commentaryEnabled, setCommentaryEnabled] = useState(false);
   const [lastCommentary, setLastCommentary] = useState('');
   const [selectedVoice, setSelectedVoice] = useState('en-US');
+  const [dividerPosition, setDividerPosition] = useState(75); // percentage for main content
+  const [isDragging, setIsDragging] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const router = useRouter();
+
+  // Handle divider drag
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDragging) return;
+    const container = document.getElementById('spectator-grid');
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    const newPosition = ((e.clientX - rect.left) / rect.width) * 100;
+    setDividerPosition(Math.min(Math.max(newPosition, 30), 90)); // Clamp between 30% and 90%
+  }, [isDragging]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    }
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isDragging, handleMouseMove, handleMouseUp]);
 
   const voices = [
     { code: 'en-US', name: 'English (US)' },
@@ -114,8 +150,12 @@ export default function SpectatorView({ quiz: initialQuiz }: { quiz: Quiz }) {
 
   useEffect(() => {
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:4000';
-    const socketInstance = io(socketUrl);
-    console.log('Spectator socket initialized:', socketUrl);
+    const socketPath = process.env.NEXT_PUBLIC_SOCKET_PATH || '/socket.io';
+    const socketInstance = io(socketUrl, { 
+      path: socketPath,
+      transports: ['websocket', 'polling']
+    });
+    console.log('Spectator socket initialized:', socketUrl, socketPath);
     
     socketInstance.emit('join-quiz', quiz.id);
     console.log('Spectator joined quiz:', quiz.id);
@@ -153,38 +193,30 @@ export default function SpectatorView({ quiz: initialQuiz }: { quiz: Quiz }) {
 
     if (!commentaryEnabled) return;
 
-    // Domain selection
+    // Domain selection (Step 1)
     if (initialQuiz.round === 'domain' && initialQuiz.phase === 'selecting_domain') {
       const team = initialQuiz.teams.find(t => t.id === initialQuiz.currentTeamId);
-      if (team && prevQuiz.phase !== 'selecting_domain') {
-        speakText(`${team.name} selecting domain`);
+      if (team && (prevQuiz.phase !== 'selecting_domain' || prevQuiz.currentTeamId !== initialQuiz.currentTeamId)) {
+        speakText(`${team.name}, select a domain`);
       }
     }
 
-    // Domain selected
-    if (initialQuiz.round === 'domain' && initialQuiz.phase === 'selecting_question' && prevQuiz.phase === 'selecting_domain') {
+    // Question selection (Step 2)
+    if (initialQuiz.round === 'domain' && initialQuiz.phase === 'selecting_question') {
+      const team = initialQuiz.teams.find(t => t.id === initialQuiz.currentTeamId);
       const domain = initialQuiz.domains.find(d => d.id === initialQuiz.selectedDomainId);
-      const team = initialQuiz.teams.find(t => t.id === initialQuiz.currentTeamId);
-      if (domain && team) {
-        speakText(`${team.name} selected ${domain.name}. Select a question`);
-      }
-    }
-
-    // Question selection phase (after showing result)
-    if (initialQuiz.round === 'domain' && initialQuiz.phase === 'selecting_question' && prevQuiz.phase === 'showing_result') {
-      const team = initialQuiz.teams.find(t => t.id === initialQuiz.currentTeamId);
-      if (team) {
-        speakText(`${team.name}, select a question`);
+      if (team && domain && (prevQuiz.phase !== 'selecting_question' || prevQuiz.currentTeamId !== initialQuiz.currentTeamId)) {
+        speakText(`${team.name}, select a question from ${domain.name}`);
       }
     }
 
     // Question selected
-    if (initialQuiz.round === 'domain' && (initialQuiz.phase === 'answering' || initialQuiz.phase === 'answering_with_options') && prevQuiz.phase === 'selecting_question') {
+    if (initialQuiz.round === 'domain' && (initialQuiz.phase === 'answering' || initialQuiz.phase === 'answering_with_options') && (prevQuiz.phase === 'selecting_question' || prevQuiz.phase === 'selecting_domain')) {
       const domain = initialQuiz.domains.find(d => d.id === initialQuiz.selectedDomainId);
       const question = domain?.questions.find(q => q.id === initialQuiz.currentQuestionId);
       const team = initialQuiz.teams.find(t => t.id === initialQuiz.currentTeamId);
-      if (question && team) {
-        speakText(`${team.name} selected question ${question.number}`);
+      if (domain && question && team) {
+        speakText(`${team.name} selected ${domain.name} question ${question.number}`);
       }
     }
 
@@ -282,7 +314,7 @@ export default function SpectatorView({ quiz: initialQuiz }: { quiz: Quiz }) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4">
-      <div className="max-w-7xl mx-auto">
+      <div className="w-full">
         <Card variant="elevated" className="mb-6">
           <div className="flex items-center justify-between">
             <div>
@@ -326,8 +358,8 @@ export default function SpectatorView({ quiz: initialQuiz }: { quiz: Quiz }) {
           </div>
         </Card>
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
+        <div id="spectator-grid" className="flex gap-0">
+          <div className="space-y-6" style={{ width: `${dividerPosition}%` }}>
             {/* Domain Round - Selecting Domain */}
             {quiz.round === 'domain' && quiz.phase === 'selecting_domain' && (
               <div className="space-y-4">
@@ -367,10 +399,10 @@ export default function SpectatorView({ quiz: initialQuiz }: { quiz: Quiz }) {
                     {currentTeam?.name} is choosing a domain...
                   </Badge>
                   <div className="grid grid-cols-2 gap-4 mt-6">
-                    {quiz.domains.map(domain => (
+                    {quiz.domains.filter(d => d.questions.some(q => !q.isAnswered)).map(domain => (
                       <Card key={domain.id} variant="interactive">
                         <div className="text-lg font-semibold">{domain.name}</div>
-                        <Badge variant="info" className="mt-2">{domain.questions.length} questions</Badge>
+                        <Badge variant="info" className="mt-2">{domain.questions.filter(q => !q.isAnswered).length} questions</Badge>
                       </Card>
                     ))}
                   </div>
@@ -444,19 +476,26 @@ export default function SpectatorView({ quiz: initialQuiz }: { quiz: Quiz }) {
                   </div>
                   <Card variant="warning" className="mb-4">
                     <div className="font-bold text-lg mb-2">Current Turn: {currentTeam?.name}</div>
-                    <div className="text-slate-300 text-sm">
-                      {quiz.phase === 'answering_with_options' ? 'Answering with options shown' : 'Answering without options'}
-                    </div>
                   </Card>
                   <Card className="bg-slate-900/50">
-                    <div className="text-3xl font-bold mb-6">{currentQuestion.text}</div>
-                    {quiz.phase === 'answering_with_options' && currentQuestion.options.length > 0 && (
-                      <div className="grid grid-cols-2 gap-4">
-                        {currentQuestion.options.map((option, idx) => (
-                          <Card key={idx} variant="info">
-                            <span className="font-semibold text-xl">{String.fromCharCode(65 + idx)}.</span> {option}
-                          </Card>
-                        ))}
+                    {/* Question - always show, larger text for long content */}
+                    <div className="mb-6">
+                      <p className="text-sm text-slate-400 mb-2">Question:</p>
+                      <div className="text-2xl md:text-3xl font-bold leading-relaxed">{currentQuestion.text}</div>
+                    </div>
+                    
+                    {/* Options - always show for domain round */}
+                    {currentQuestion.options && currentQuestion.options.length > 0 && (
+                      <div>
+                        <p className="text-sm text-slate-400 mb-3">Options:</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {currentQuestion.options.map((option: string, idx: number) => (
+                            <Card key={idx} variant="info" className="p-4">
+                              <span className="font-bold text-lg text-blue-400 mr-2">{String.fromCharCode(65 + idx)}.</span>
+                              <span className="text-lg">{option}</span>
+                            </Card>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </Card>
@@ -529,7 +568,7 @@ export default function SpectatorView({ quiz: initialQuiz }: { quiz: Quiz }) {
                       })}
                     </div>
                     <Badge variant="info" className="mt-3">
-                      20 seconds each
+                      15 seconds each
                     </Badge>
                   </div>
                 </Card>
@@ -635,9 +674,23 @@ export default function SpectatorView({ quiz: initialQuiz }: { quiz: Quiz }) {
                   {/* Correct Answer */}
                   <div className="text-center">
                     <h3 className="text-3xl font-bold mb-4 text-emerald-400">Correct Answer</h3>
-                    <Card variant="success" className="text-2xl text-emerald-300">
-                      {quiz.lastDomainAnswer.correctAnswer}
-                    </Card>
+                    {(() => {
+                      const correctAnswerText = quiz.lastDomainAnswer.correctAnswer;
+                      const options = quiz.lastDomainAnswer.options || [];
+                      // Try to find by exact match first
+                      let correctIndex = options.findIndex((opt: string) => opt === correctAnswerText);
+                      // If not found, try case-insensitive match
+                      if (correctIndex < 0) {
+                        correctIndex = options.findIndex((opt: string) => opt?.toLowerCase() === correctAnswerText?.toLowerCase());
+                      }
+                      const optionLabel = correctIndex >= 0 ? `${String.fromCharCode(65 + correctIndex)}.` : '';
+                      return (
+                        <Card variant="success" className="text-2xl text-emerald-300">
+                          <span className="font-bold text-emerald-200 mr-2">{optionLabel}</span>
+                          {correctAnswerText}
+                        </Card>
+                      );
+                    })()}
                   </div>
 
                   {/* All Team Answers */}
@@ -645,7 +698,17 @@ export default function SpectatorView({ quiz: initialQuiz }: { quiz: Quiz }) {
                     <div className="text-center">
                       <h3 className="text-2xl font-bold mb-6">Team Answers</h3>
                       <div className="space-y-3">
-                        {quiz.lastDomainAnswer.allAnswers.map((teamAnswer: any) => (
+                        {quiz.lastDomainAnswer.allAnswers.map((teamAnswer: any) => {
+                          const domain = quiz.domains.find((d: Domain) => d.questions.some((q: Question) => q.text === quiz.lastDomainAnswer.questionText));
+                          const question = domain?.questions.find((q: Question) => q.text === quiz.lastDomainAnswer.questionText);
+                          const options = question?.options || [];
+                          // Try exact match first, then case-insensitive
+                          let answerIndex = teamAnswer.answer ? options.findIndex((opt: string) => opt === teamAnswer.answer) : -1;
+                          if (answerIndex < 0 && teamAnswer.answer) {
+                            answerIndex = options.findIndex((opt: string) => opt?.toLowerCase() === teamAnswer.answer?.toLowerCase());
+                          }
+                          const answerLabel = answerIndex >= 0 ? `${String.fromCharCode(65 + answerIndex)}.` : '';
+                          return (
                           <Card 
                             key={teamAnswer.teamId}
                             variant={teamAnswer.isCorrect ? 'success' : 'error'}
@@ -658,7 +721,10 @@ export default function SpectatorView({ quiz: initialQuiz }: { quiz: Quiz }) {
                                 ) : teamAnswer.isTimeout ? (
                                   <span className="ml-2 text-amber-400">TIMEOUT</span>
                                 ) : teamAnswer.answer ? (
-                                  <span className="ml-2">"{teamAnswer.answer}"</span>
+                                  <span className="ml-2">
+                                    <span className="font-bold text-blue-300">{answerLabel}</span>
+                                    "{teamAnswer.answer}"
+                                  </span>
                                 ) : (
                                   <span className="ml-2">No answer</span>
                                 )}
@@ -671,7 +737,7 @@ export default function SpectatorView({ quiz: initialQuiz }: { quiz: Quiz }) {
                               </Badge>
                             </div>
                           </Card>
-                        ))}
+                        )})}
                       </div>
                     </div>
                   )}
@@ -714,8 +780,18 @@ export default function SpectatorView({ quiz: initialQuiz }: { quiz: Quiz }) {
             )}
           </div>
 
+          {/* Resizable Divider */}
+          <div 
+            className={`w-2 cursor-col-resize flex-shrink-0 bg-slate-700 hover:bg-indigo-500 transition-colors ${
+              isDragging ? 'bg-indigo-500' : ''
+            } flex items-center justify-center`}
+            onMouseDown={handleMouseDown}
+          >
+            <GripVertical className={`w-4 h-4 text-slate-400 ${isDragging ? 'text-white' : ''}`} />
+          </div>
+
           {/* Leaderboard Sidebar */}
-          <div className="lg:col-span-1">
+          <div style={{ width: `${100 - dividerPosition}%` }}>
             <Card variant="elevated" className="sticky top-4">
               <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
                 <Trophy className="w-6 h-6 text-yellow-400" />

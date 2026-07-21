@@ -12,7 +12,7 @@ export async function getSession(): Promise<IronSession<SessionData>> {
     password: process.env.SESSION_SECRET!,
     cookieName: 'quiz-session',
     cookieOptions: {
-      secure: false,
+      secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7, // 7 days

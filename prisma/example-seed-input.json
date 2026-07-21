@@ -1,0 +1,55 @@
+{
+  "quizName": "AWS DOP-C02 Practice",
+  "domains": [
+    {
+      "name": "Compute & Containers",
+      "questions": [
+        {
+          "question": "Which AWS service is used to run containerized applications?",
+          "options": ["Amazon ECS", "Amazon S3", "Amazon DynamoDB", "Amazon CloudWatch"],
+          "correctAnswer": "A"
+        },
+        {
+          "question": "What is the maximum duration for an AWS Lambda function execution?",
+          "options": ["5 minutes", "15 minutes", "1 hour", "12 hours"],
+          "correctAnswer": "B"
+        },
+        {
+          "question": "Which Amazon EC2 instance type is optimized for compute-intensive workloads?",
+          "options": ["T3", "M5", "C5", "R5"],
+          "correctAnswer": "C"
+        }
+      ]
+    },
+    {
+      "name": "CI/CD & Automation",
+      "questions": [
+        {
+          "question": "Which AWS service is used for continuous integration and delivery?",
+          "options": ["AWS CodePipeline", "AWS SQS", "AWS SNS", "AWS SWF"],
+          "correctAnswer": "A"
+        },
+        {
+          "question": "What file defines buildspec settings for AWS CodeBuild?",
+          "options": ["buildspec.yml", "Dockerfile", "package.json", "Makefile"],
+          "correctAnswer": "A"
+        }
+      ]
+    },
+    {
+      "name": "Security & IAM",
+      "questions": [
+        {
+          "question": "What is the AWS service for identity and access management?",
+          "options": ["AWS IAM", "Amazon GuardDuty", "AWS Shield", "AWS WAF"],
+          "correctAnswer": "A"
+        },
+        {
+          "question": "Which IAM feature enables temporary access to AWS resources?",
+          "options": ["IAM Roles", "IAM Users", "IAM Groups", "IAM Policies"],
+          "correctAnswer": "A"
+        }
+      ]
+    }
+  ]
+}

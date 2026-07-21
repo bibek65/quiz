@@ -11,7 +11,10 @@ const server = createServer(app);
 server.setMaxListeners(20);
 
 const io = new Server(server, {
-  cors: { origin: '*' },
+  cors: {
+    origin: process.env.ALLOWED_ORIGIN || '*',
+    methods: ['GET', 'POST']
+  },
   pingTimeout: 60000,
   pingInterval: 25000,
 });
@@ -62,8 +65,9 @@ app.get('/health', (req, res) => {
   });
 });
 
-server.listen(4000, '0.0.0.0', () => {
-  console.log('Socket.IO server running on port 4000');
+const port = process.env.PORT || 4000;
+server.listen(port, '0.0.0.0', () => {
+  console.log(`Socket.IO server running on port ${port}`);
 });
 
 // Cleanup on process termination

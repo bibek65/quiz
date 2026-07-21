@@ -9,7 +9,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
-      <div className="max-w-6xl w-full">
+      <div className="w-full">
         {/* Hero Section */}
         <div className="text-center mb-16 animate-fade-in">
           <h1 className="text-6xl md:text-7xl font-bold text-white mb-4 tracking-tight">

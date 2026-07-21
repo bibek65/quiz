@@ -4,17 +4,17 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-http://192.168.16.132:8080}
-        - NEXT_PUBLIC_SOCKET_PATH=${NEXT_PUBLIC_SOCKET_PATH:-/socket.io}
+        - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL}
+        - NEXT_PUBLIC_SOCKET_PATH=${NEXT_PUBLIC_SOCKET_PATH}
     environment:
-      - DATABASE_URL=postgresql://quizuser:quizpass@postgres:5432/quizdb?schema=public
-      - SESSION_SECRET=${SESSION_SECRET:-local-dev-secret}
-      - HOST_PASSWORD=${HOST_PASSWORD:-admin123}
-      - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-http://192.168.16.132:8080}
+      - DATABASE_URL=${DATABASE_URL}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - HOST_PASSWORD=${HOST_PASSWORD}
+      - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL}
       - NEXT_PUBLIC_SOCKET_PATH=${NEXT_PUBLIC_SOCKET_PATH:-/socket.io}
-      - SOCKET_EMIT_URL=http://socket:4000/emit
-      - ALLOWED_ORIGIN=${ALLOWED_ORIGIN:-*}
-      - NODE_ENV=${NODE_ENV:-development}
+      - SOCKET_EMIT_URL=${SOCKET_EMIT_URL:-http://socket:4000/emit}
+      - ALLOWED_ORIGIN=${ALLOWED_ORIGIN}
+      - NODE_ENV=production
     depends_on:
       - postgres
       - socket
@@ -28,7 +28,7 @@ services:
       dockerfile: Dockerfile.socket
     environment:
       - PORT=4000
-      - ALLOWED_ORIGIN=${ALLOWED_ORIGIN:-*}
+      - ALLOWED_ORIGIN=${ALLOWED_ORIGIN}
     restart: unless-stopped
     networks:
       - quiz-network
@@ -36,11 +36,9 @@ services:
   postgres:
     image: postgres:15-alpine
     environment:
-      POSTGRES_USER: quizuser
-      POSTGRES_PASSWORD: quizpass
-      POSTGRES_DB: quizdb
-    ports:
-      - "5433:5432"
+      POSTGRES_USER: ${POSTGRES_USER:-quizuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-quizpass}
+      POSTGRES_DB: ${POSTGRES_DB:-quizdb}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
@@ -50,9 +48,11 @@ services:
   nginx:
     image: nginx:alpine
     ports:
-      - "8080:80"
+      - "80:80"
+      - "443:443"
     volumes:
-      - ./nginx.local.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
     depends_on:
       - app
       - socket
@@ -65,7 +65,7 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      - DATABASE_URL=postgresql://quizuser:quizpass@postgres:5432/quizdb?schema=public
+      - DATABASE_URL=${DATABASE_URL}
     command: ["npx", "prisma", "db", "push", "--accept-data-loss"]
     depends_on:
       - postgres

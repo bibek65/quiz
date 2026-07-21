@@ -3,7 +3,7 @@
 import { Clock, CheckCircle, XCircle, Award, Pause, Zap, Trophy, Timer, AlertCircle, Info, Users } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import * as React from 'react';
-import { joinTeam, selectDomain, selectQuestion, submitDomainAnswer, showOptions, passQuestion, buzz, submitBuzzerAnswer } from '@/lib/actions';
+import { joinTeam, selectDomain, selectQuestion, selectDomainAndQuestion, submitDomainAnswer, showOptions, passQuestion, buzz, submitBuzzerAnswer } from '@/lib/actions';
 import { useRouter } from 'next/navigation';
 import { useSocket } from '@/hooks/useSocket';
 import Button from '@/components/ui/Button';
@@ -12,8 +12,17 @@ import Input, { Select, Textarea } from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
 import EmptyState from '@/components/ui/EmptyState';
 
-export default function TeamInterface({ quiz }: { quiz: any }) {
-  const { socket, isConnected, hasReconnected } = useSocket(quiz.id);
+export default function TeamInterface({ quiz: initialQuiz }: { quiz: any }) {
+  const router = useRouter();
+  // Use the quiz prop directly - router.refresh() will cause Next.js to re-fetch and pass new props
+  const quiz = {
+    ...initialQuiz,
+    domains: initialQuiz.domains || [],
+    buzzerQuestions: initialQuiz.buzzerQuestions || [],
+    teams: initialQuiz.teams || [],
+    usedDomains: initialQuiz.usedDomains || [],
+  };
+  const { isConnected, hasReconnected } = useSocket(quiz.id);
   const [selectedTeam, setSelectedTeam] = useState('');
   const [playerName, setPlayerName] = useState('');
   const [joined, setJoined] = useState(false);
@@ -26,7 +35,6 @@ export default function TeamInterface({ quiz }: { quiz: any }) {
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
-  const router = useRouter();
 
   const isMyTurn = quiz.currentTeamId === selectedTeam;
   const hasBuzzed = quiz.buzzSequence?.includes(selectedTeam);
@@ -369,10 +377,11 @@ export default function TeamInterface({ quiz }: { quiz: any }) {
   }
 
   const team = quiz.teams.find((t: any) => t.id === selectedTeam);
-  const currentQuestion = quiz.round === 'domain' 
-    ? quiz.domains?.flatMap((d: any) => d.questions).find((q: any) => q.id === quiz.currentQuestionId)
+  const currentQuestion = quiz.round === 'domain' && quiz.currentQuestionId
+    ? quiz.domains?.flatMap((d: any) => d.questions || []).find((q: any) => q.id === quiz.currentQuestionId)
     : quiz.buzzerQuestions?.find((q: any) => q.id === quiz.currentQuestionId);
-  const availableDomains = quiz.domains?.filter((d: any) => !quiz.usedDomains?.includes(d.id));
+  const availableDomains = (quiz.domains || []).filter((d: any) => (quiz.usedDomains || []).includes(d.id) === false);
+  const currentDomain = quiz.selectedDomainId ? (quiz.domains || []).find((d: any) => d.id === quiz.selectedDomainId) : null;
 
   return (
     <div className="min-h-screen p-4 md:p-6 lg:p-8">
@@ -384,7 +393,7 @@ export default function TeamInterface({ quiz }: { quiz: any }) {
         </div>
       )}
       
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         <Card variant="elevated">
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
             <div>
@@ -451,7 +460,7 @@ export default function TeamInterface({ quiz }: { quiz: any }) {
           </Card>
         )}
 
-        {/* DOMAIN ROUND - DOMAIN SELECTION */}
+        {/* DOMAIN ROUND - SELECTING DOMAIN (Step 1) */}
         {quiz.round === 'domain' && quiz.status === 'active' && quiz.phase === 'selecting_domain' && (
           <Card variant="elevated">
             {!isMyTurn ? (
@@ -469,29 +478,34 @@ export default function TeamInterface({ quiz }: { quiz: any }) {
                   Select Domain
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {availableDomains?.map((domain: any) => (
-                    <Button
-                      key={domain.id}
-                      onClick={() => selectDomain(quiz.id, domain.id)}
-                      variant="primary"
-                      size="lg"
-                      className="h-auto py-6"
-                    >
-                      <div className="text-center">
-                        <div className="font-semibold text-lg">{domain.name}</div>
-                        <div className="text-sm text-slate-300 mt-2">
-                          {domain.questions.filter((q: any) => !q.isAnswered).length} questions
+                  {availableDomains?.map((domain: any) => {
+                    const unansweredCount = domain.questions.filter((q: any) => !q.isAnswered).length;
+                    if (unansweredCount === 0) return null;
+                    
+                    return (
+                      <Button
+                        key={domain.id}
+                        onClick={() => selectDomain(quiz.id, domain.id)}
+                        variant="primary"
+                        size="lg"
+                        className="h-auto py-6"
+                      >
+                        <div className="text-center">
+                          <div className="font-semibold text-lg">{domain.name}</div>
+                          <div className="text-sm text-slate-300 mt-2">
+                            {unansweredCount} questions available
+                          </div>
                         </div>
-                      </div>
-                    </Button>
-                  ))}
+                      </Button>
+                    );
+                  })}
                 </div>
               </>
             )}
           </Card>
         )}
 
-        {/* DOMAIN ROUND - QUESTION SELECTION */}
+        {/* DOMAIN ROUND - SELECTING QUESTION (Step 2) */}
         {quiz.round === 'domain' && quiz.status === 'active' && quiz.phase === 'selecting_question' && (
           <Card variant="elevated">
             {!isMyTurn ? (
@@ -508,20 +522,47 @@ export default function TeamInterface({ quiz }: { quiz: any }) {
                   <CheckCircle className="w-6 h-6 text-emerald-400" />
                   Select Question
                 </h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {quiz.domains.find((d: any) => d.id === quiz.selectedDomainId)?.questions.map((q: any) => (
-                    <Button
-                      key={q.id}
-                      onClick={() => selectQuestion(quiz.id, q.id, selectedTeam)}
-                      disabled={q.isAnswered}
-                      variant={q.isAnswered ? 'secondary' : 'success'}
-                      size="lg"
-                      className="h-20 text-2xl font-bold"
-                    >
-                      {q.number}
-                    </Button>
-                  ))}
+                
+                {/* Show selected domain */}
+                {currentDomain && (
+                  <div className="mb-6 p-4 bg-indigo-900/30 rounded-lg border border-indigo-500/30">
+                    <div className="text-sm text-slate-400 mb-1">Selected Domain:</div>
+                    <div className="text-xl font-semibold text-indigo-300">{currentDomain.name}</div>
+                  </div>
+                )}
+                
+                {/* Question number grid */}
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  {currentDomain?.questions.map((q: any) => {
+                    const isSelected = quiz.currentQuestionId === q.id;
+                    return (
+                      <button
+                        key={q.id}
+                        onClick={() => !q.isAnswered && !isSelected && selectQuestion(quiz.id, q.id, selectedTeam)}
+                        disabled={q.isAnswered || isSelected}
+                        className={`
+                          h-16 text-2xl font-bold rounded-lg transition-all
+                          ${isSelected 
+                            ? 'bg-yellow-500 text-white border-4 border-yellow-300 cursor-not-allowed opacity-100' 
+                            : q.isAnswered 
+                              ? 'bg-slate-600 text-slate-400 cursor-not-allowed opacity-50'
+                              : 'bg-emerald-500 hover:bg-emerald-400 text-white'
+                          }
+                        `}
+                      >
+                        {q.number}
+                      </button>
+                    );
+                  })}
                 </div>
+                
+                {/* Back button to change domain */}
+                <button
+                  onClick={() => selectDomain(quiz.id, '')}
+                  className="mt-4 text-sm text-slate-400 hover:text-slate-300 underline"
+                >
+                  ← Change Domain
+                </button>
               </>
             )}
           </Card>
@@ -563,129 +604,48 @@ export default function TeamInterface({ quiz }: { quiz: any }) {
                 )}
               </Card>
             
-            {/* Answer form - only shown when it's your turn */}
-            <form onSubmit={async (e) => {
-              e.preventDefault();
-              if (!isMyTurn || isSubmitting) return;
-              
-              setIsSubmitting(true);
-              try {
-                const result = await submitDomainAnswer(quiz.id, selectedTeam, currentQuestion.id, answer, quiz.phase === 'answering_with_options');
-                if (result.success) {
-                  if (result.needsEvaluation) {
-                    setToast({
-                      message: 'Answer submitted! Waiting for host evaluation...',
-                      type: 'success'
-                    });
-                  }
-                } else if (result.error) {
-                  setToast({
-                    message: ` ${result.error}`,
-                    type: 'error'
-                  });
-                }
-                setAnswer('');
-              } finally {
-                setIsSubmitting(false);
-              }
-            }} className="space-y-4">
-              
-              {/* Show text input only when options are NOT shown */}
-              {quiz.phase !== 'answering_with_options' && (
-                <Textarea
-                  value={answer}
-                  onChange={(e) => setAnswer(e.target.value)}
-                  placeholder="Type your answer..."
-                  rows={4}
-                />
-              )}
-              
-              {/* Show option buttons when options are shown */}
-              {quiz.phase === 'answering_with_options' && currentQuestion.options.length > 0 && (
-                <div className="space-y-3">
-                  <p className="text-lg font-semibold text-center">Select your answer:</p>
-                  <div className="grid grid-cols-2 gap-4">
-                    {currentQuestion.options.map((opt: string, i: number) => (
-                      <Button
-                        key={i}
-                        type="button"
-                        disabled={isSubmitting}
-                        onClick={async () => {
-                          if (isSubmitting) return;
-                          setIsSubmitting(true);
-                          try {
-                            const result = await submitDomainAnswer(quiz.id, selectedTeam, currentQuestion.id, opt, true);
-                            if (result.success) {
-                              if (result.needsEvaluation) {
-                                setToast({
-                                  message: 'Answer submitted! Waiting for host evaluation...',
-                                  type: 'success'
-                                });
-                              }
-                            } else if (result.error) {
-                              setToast({
-                                message: ` ${result.error}`,
-                                type: 'error'
-                              });
-                            }
-                            setAnswer('');
-                          } finally {
-                            setIsSubmitting(false);
-                          }
-                        }}
-                        variant="success"
-                        size="lg"
-                        className="h-24 text-4xl font-bold"
-                      >
-                        {String.fromCharCode(65 + i)}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              {/* Control buttons - only show when options are NOT shown */}
-              {quiz.phase !== 'answering_with_options' && (
-                <div className="flex gap-4">
-                  {!currentQuestion.optionsViewed && !currentQuestion.optionsDefault && (
+            {/* Options - show letters only, teams see options in SpectatorView */}
+            {currentQuestion.options && currentQuestion.options.length > 0 && (
+              <div className="space-y-3">
+                <p className="text-lg font-semibold text-center">Select your answer:</p>
+                <div className={`grid gap-4 ${currentQuestion.options.length <= 4 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                  {currentQuestion.options.map((opt: string, i: number) => (
                     <Button
+                      key={i}
                       type="button"
                       disabled={isSubmitting}
                       onClick={async () => {
-                        const result = await passQuestion(quiz.id, currentQuestion.id, selectedTeam);
-                        if (result.success) {
-                          setToast({ message: 'Question passed', type: 'success' });
+                        if (isSubmitting) return;
+                        setIsSubmitting(true);
+                        try {
+                          const result = await submitDomainAnswer(quiz.id, selectedTeam, currentQuestion.id, opt, true);
+                          if (result.success) {
+                            if (result.needsEvaluation) {
+                              setToast({
+                                message: 'Answer submitted! Waiting for host evaluation...',
+                                type: 'success'
+                              });
+                            }
+                          } else if (result.error) {
+                            setToast({
+                              message: ` ${result.error}`,
+                              type: 'error'
+                            });
+                          }
+                        } finally {
+                          setIsSubmitting(false);
                         }
                       }}
-                      variant="warning"
-                      className="flex-1"
+                      variant="success"
+                      size="lg"
+                      className="h-20 text-5xl font-bold"
                     >
-                      Pass
+                      {String.fromCharCode(65 + i)}
                     </Button>
-                  )}
-                  {currentQuestion.options.length > 0 && !currentQuestion.optionsViewed && !currentQuestion.optionsDefault && (
-                    <Button
-                      type="button"
-                      disabled={isSubmitting}
-                      onClick={() => showOptions(quiz.id, currentQuestion.id)}
-                      variant="warning"
-                      className="flex-1"
-                    >
-                      Show Options (5/-5)
-                    </Button>
-                  )}
-                  <Button 
-                    type="submit" 
-                    disabled={isSubmitting} 
-                    variant="success"
-                    className="flex-1"
-                    loading={isSubmitting}
-                  >
-                    {currentQuestion.optionsDefault ? 'Submit (10/-5)' : 'Submit (10)'}
-                  </Button>
+                  ))}
                 </div>
-              )}
-            </form>
+              </div>
+            )}
             </>
             )}
           </Card>
@@ -711,9 +671,6 @@ export default function TeamInterface({ quiz }: { quiz: any }) {
                 Question #{currentQuestion.number}
               </h2>
             </div>
-            <Card variant="warning" className="mb-4">
-              <p className="text-lg">{currentQuestion.text}</p>
-            </Card>
 
             {hasBuzzed && quiz.buzzSequence && quiz.buzzSequence.length > 0 && (
               <Card className="mb-4">

@@ -1,0 +1,236 @@
+{
+  "domains": [
+    {
+      "name": "SDLC and Automation",
+      "questions": [
+        {
+          "question": "A company uses CodePipeline for continuous deployment. After each production deployment, a suite of integration smoke tests must run. If any test fails, the pipeline must stop and the deployment must roll back automatically. Which solution meets this?",
+          "options": [
+            "Add a Manual Approval action after the deploy stage. Require test results to be attached before approval.",
+            "Add a Test action using CodeBuild after the deploy stage. Configure the CodeBuild project to run the tests and send results to CodeDeploy.",
+            "Add an Invoke action after the deploy stage using AWS Lambda as the provider. The Lambda runs tests and calls PutJobSuccessResult or PutJobFailureResult based on test outcomes.",
+            "Create an EventBridge rule to monitor deployment completion. Trigger a Step Functions workflow to run tests and call the CodeDeploy rollback API on failure."
+          ],
+          "correctAnswer": "C"
+        },
+        {
+          "question": "In AWS CodePipeline, what is the maximum number of days a Manual Approval action can remain pending before it automatically times out and causes the pipeline execution to fail?",
+          "options": ["1 day", "7 days", "30 days", "90 days"],
+          "correctAnswer": "B"
+        },
+        {
+          "question": "When AWS CodeDeploy deploys to Amazon ECS, which deployment strategy types are supported — as opposed to EC2/On-Premises deployments?",
+          "options": [
+            "In-place and blue/green",
+            "Blue/green only",
+            "In-place only",
+            "Canary, linear, and all-at-once (but NOT blue/green)"
+          ],
+          "correctAnswer": "B"
+        },
+        {
+          "question": "An application runs on Amazon EC2 instances behind an Application Load Balancer (ALB). A DevOps engineer is using AWS CodeDeploy to release a new version. The deployment FAILS during the AllowTraffic lifecycle event, but no cause is indicated in the deployment logs. What would MOST LIKELY cause this?",
+          "options": [
+            "The appspec.yml file contains an invalid script that runs in the AllowTraffic lifecycle hook.",
+            "The user who initiated the deployment does not have the necessary permissions to interact with the ALB.",
+            "The health checks specified for the ALB target group are misconfigured.",
+            "The CodeDeploy agent was not installed on the EC2 instances in the ALB target group."
+          ],
+          "correctAnswer": "C"
+        },
+        {
+          "question": "A company recently migrated to AWS Cloud. The company wants a SERVERLESS solution for large-scale PARALLEL on-demand processing of a semi-structured dataset (logs, media files, sales transactions, IoT sensor data) stored in Amazon S3. The company wants the solution to process THOUSANDS of items in parallel. Which solution will meet these requirements with the MOST operational efficiency?",
+          "options": [
+            "Use the AWS Step Functions Map state in Inline mode to process the data in parallel.",
+            "Use the AWS Step Functions Map state in Distributed mode to process the data in parallel.",
+            "Use AWS Glue to process the data in parallel.",
+            "Use several AWS Lambda functions to process the data in parallel."
+          ],
+          "correctAnswer": "B"
+        },
+        {
+          "question": "A company built an application based on AWS Lambda deployed in an AWS CloudFormation stack. A recent production release caused an outage lasting several minutes. A solutions architect must adjust the deployment process to support a CANARY RELEASE. Which solution will meet these requirements?",
+          "options": [
+            "Create an alias for every new deployed version of the Lambda function. Use the AWS CLI update-alias command with the routing-config parameter to distribute the load.",
+            "Deploy the application into a new CloudFormation stack. Use an Amazon Route 53 weighted routing policy to distribute the load.",
+            "Create a version for every new deployed Lambda function. Use the AWS CLI update-function-configuration command with the routing-config parameter to distribute the load.",
+            "Configure AWS CodeDeploy and use CodeDeployDefault.OneAtATime to distribute the load."
+          ],
+          "correctAnswer": "A"
+        }
+      ]
+    },
+    {
+      "name": "Security and Compliance",
+      "questions": [
+        {
+          "question": "A company has a single AWS account that runs hundreds of Amazon EC2 instances in a single AWS Region. The company launches and terminates new EC2 instances every hour. The account includes existing EC2 instances that have been running for longer than a week. The company's security policy requires all running EC2 instances to have an EC2 instance profile attached. The company has created a default EC2 instance profile. The default EC2 instance profile must be attached to any EC2 instances that do not have a profile attached. Which solution will meet these requirements?",
+          "options": [
+            "Configure an Amazon EventBridge rule that matches the Amazon EC2 RunInstances API calls. Configure the rule to invoke an AWS Lambda function to attach the default instance profile to the EC2 instances.",
+            "Configure AWS Config. Deploy an AWS Config ec2-instance-profile-attached managed rule. Configure an automatic remediation action that invokes an AWS Systems Manager Automation runbook to attach the default instance profile to the EC2 instances.",
+            "Configure an Amazon EventBridge rule that matches the Amazon EC2 StartInstances API calls. Configure the rule to invoke an AWS Systems Manager Automation runbook to attach the default instance profile to the EC2 instances.",
+            "Configure AWS Config. Deploy an AWS Config iam-role-managed-policy-check managed rule. Configure an automatic remediation action that invokes an AWS Lambda function to attach the default instance profile to the EC2 instances."
+          ],
+          "correctAnswer": "B"
+        },
+        {
+          "question": "A company uses Amazon EC2 as its primary compute platform. A DevOps team wants to audit the company's EC2 instances to check whether any prohibited applications have been installed on the EC2 instances. Which solution will meet these requirements with the MOST operational efficiency?",
+          "options": [
+            "Configure AWS Systems Manager on each instance. Use AWS Systems Manager Inventory. Use Systems Manager resource data sync to synchronize and store findings in an Amazon S3 bucket. Create an AWS Lambda function that runs when new objects are added to the S3 bucket. Configure the Lambda function to identify prohibited applications.",
+            "Configure AWS Systems Manager on each instance. Use Systems Manager Inventory. Create AWS Config rules that monitor changes from Systems Manager Inventory to identify prohibited applications.",
+            "Configure AWS Systems Manager on each instance. Use Systems Manager Inventory. Filter a trail in AWS CloudTrail for Systems Manager Inventory events to identify prohibited applications.",
+            "Designate Amazon CloudWatch Logs as the log destination for all application instances. Run an automated script across all instances to create an inventory of installed applications. Configure the script to forward the results to CloudWatch Logs. Create a CloudWatch alarm that uses filter patterns to search log data to identify prohibited applications."
+          ],
+          "correctAnswer": "B"
+        },
+        {
+          "question": "A developer is creating a proof of concept for a new software as a service (SaaS) application. The application is in a shared development AWS account that is part of an organization in AWS Organizations. The developer needs to create service-linked IAM roles for the AWS services that are being considered for the proof of concept. The solution needs to give the developer the ability to create and configure the service-linked roles only. Which solution will meet these requirements?",
+          "options": [
+            "Create an IAM user for the developer in the organization's management account. Configure a cross-account role in the development account for the developer to use. Limit the scope of the cross-account role to common services.",
+            "Add the developer to an IAM group. Attach the PowerUserAccess managed policy to the IAM group. Enforce multi-factor authentication (MFA) on the user account.",
+            "Add an SCP to the development account in Organizations. Configure the SCP with a Deny rule for iam:* to limit the developer's access.",
+            "Create an IAM role that has the necessary IAM access to allow the developer to create policies and roles. Create and attach a permissions boundary to the role. Grant the developer access to assume the role."
+          ],
+          "correctAnswer": "D"
+        },
+        {
+          "question": "A company uses an organization in AWS Organizations that has all features enabled to manage its AWS accounts. Amazon EC2 instances run in the AWS accounts. The company requires that all current EC2 instances must use Instance Metadata Service Version 2 (IMDSv2). The company needs to block AWS API calls that originate from EC2 instances that do not use IMDSv2. Which solution will meet these requirements?",
+          "options": [
+            "Create a new SCP statement that denies the ec2:RunInstances action when the ec2:MetadataHttpTokens condition key is not equal to the value of required. Attach the SCP to the root of the organization.",
+            "Create a new SCP statement that denies the ec2:RunInstances action when the ec2:MetadataHttpPutResponseHopLimit condition key value is greater than two. Attach the SCP to the root of the organization.",
+            "Create a new SCP statement that denies \"*\" when the ec2:RoleDelivery condition key value is less than two. Attach the SCP to the root of the organization.",
+            "Create a new SCP statement that denies when the ec2:MetadataHttpTokens condition key value is not equal to required. Attach the SCP to the root of the organization."
+          ],
+          "correctAnswer": "D"
+        },
+        {
+          "question": "During a security audit, a company discovered that some security groups allow SSH traffic from 0.0.0.0/0. A security team must implement a solution to detect and remediate this issue as soon as possible. The company uses one organization in AWS Organizations to manage all the company's AWS accounts. Which solution will meet these requirements?",
+          "options": [
+            "Enable AWS Config for all AWS accounts. Use a periodic trigger to activate the vpc-sg-port-restriction-check AWS Config rule. Create an AWS Lambda function to remediate any noncompliant rules.",
+            "Create an AWS Lambda function in each AWS account to delete all the security group rules. Create an Amazon EventBridge rule to match security group update events or creation events. Set the Lambda function in each account as a target for the rule.",
+            "Enable AWS Config for all AWS accounts. Create a custom AWS Config rule to run on the restricted-ssh configuration change trigger. Configure the rule to invoke an AWS Lambda function to remediate any noncompliant resources.",
+            "Create an AWS Systems Manager Automation document in each account to inspect all security groups and to delete noncompliant rules. Use an Amazon EventBridge rule to run the Automation document every hour."
+          ],
+          "correctAnswer": "C"
+        },
+        {
+          "question": "A company has multiple AWS accounts in an organization in AWS Organizations that has all features enabled. The company's DevOps administrator needs to improve security across all the company's AWS accounts. The administrator needs to identify the top users and roles in use across all accounts. Which solution will meet these requirements with the MOST operational efficiency?",
+          "options": [
+            "Create a new organization trail in AWS CloudTrail. Configure the trail to send log events to Amazon CloudWatch Logs. Create a CloudWatch Contributor Insights rule for the userIdentity.arn log field. View the results in CloudWatch Contributor Insights.",
+            "Create an unused access analysis for the organization by using AWS Identity and Access Management Access Analyzer. Review the analyzer results and determine if each finding has the intended level of permissions required for the workload.",
+            "Create a new organization trail in AWS CloudTrail. Create a table in Amazon Athena that uses partition projection. Load the Athena table with CloudTrail data. Query the Athena table to find the top users and roles.",
+            "Generate a Service access report for each account by using Organizations. From the results, pull the last accessed date and last accessed by account fields to find the top users and roles."
+          ],
+          "correctAnswer": "A"
+        }
+      ]
+    },
+    {
+      "name": "Configuration Management and IaC",
+      "questions": [
+        {
+          "question": "A company uses a pipeline in AWS CodePipeline to upload AWS CloudFormation templates to an Amazon S3 bucket. The pipeline uses the templates to deploy CloudFormation stacks that match the names of the templates. The company has experienced issues when it tries to revert templates to a previous version. To prevent these issues, the company must have the ability to review template modifications before the modifications are deployed to production. Which solution will meet these requirements with the LEAST operational overhead?",
+          "options": [
+            "Configure a connection in AWS CodeConnections to a Git repository. Store the templates in the Git repository. Configure a pull request workflow to review template modifications. Configure AWS CloudFormation Git sync for the stacks.",
+            "Add a manual review action in the pipeline to review modifications to the template code before the stack deployments.",
+            "Update the pipeline to invoke an AWS Lambda function to check the template modifications before the stack deployments.",
+            "Configure a connection in AWS CodeConnections to a Git repository. Store the templates in the Git repository. Configure the pipeline to include a source action that uses the connection. Add a manual review action to the pipeline to review template modifications before the stack deployments."
+          ],
+          "correctAnswer": "A"
+        },
+        {
+          "question": "A company frequently creates Docker images of an application. The company stores the images in Amazon Elastic Container Registry (Amazon ECR). The company creates both tagged images and untagged images. The company wants to implement a solution to automatically delete images that have not been updated for a long time and are not frequently used. The solution must retain at least a specified number of images. Which solution will meet these requirements with the LEAST operational overhead?",
+          "options": [
+            "Use Amazon S3 Lifecycle policies on the ECR repository to automatically delete images based on image age or the absence of tags on the image.",
+            "Use Amazon ECR lifecycle policies to delete images based on age or the number of images that need to be retained in the repository.",
+            "Configure an AWS Lambda function to run a schedule to delete images based on age or the number of images that need to be retained in the repository.",
+            "Use AWS Systems Manager to run a script by using the aws:executeScript action to automatically delete images based on image age or the absence of tags on the image."
+          ],
+          "correctAnswer": "B"
+        },
+        {
+          "question": "A company uses AWS Organizations and AWS Control Tower to manage all the company's AWS accounts. The company uses the Enterprise Support plan. A DevOps engineer is using Account Factory for Terraform (AFT) to provision new accounts. When new accounts are provisioned, the DevOps engineer notices that the support plan for the new accounts is set to the Basic Support plan. The DevOps engineer needs to implement a solution to provision the new accounts with the Enterprise Support plan. Which solution will meet these requirements?",
+          "options": [
+            "Use an AWS Config conformance pack to deploy the account-part-of-organizations AWS Config rule and to automatically remediate any noncompliant accounts.",
+            "Create an AWS Lambda function to create a ticket for AWS Support to add the account to the Enterprise Support plan. Grant the Lambda function the support:ResolveCase permission.",
+            "Add an additional value to the control_tower_parameters input to set the AWSEnterpriseSupport parameter as the organization's management account number.",
+            "Set the aft_feature_enterprise_support feature flag to True in the AFT deployment input configuration. Redeploy AFT and apply the changes."
+          ],
+          "correctAnswer": "D"
+        },
+        {
+          "question": "An IT team has built an AWS CloudFormation template so others in the company can quickly and reliably deploy and terminate an application. The template creates an Amazon EC2 instance with a user data script to install the application and an Amazon S3 bucket that the application uses to serve static webpages while it is running. All resources should be removed when the CloudFormation stack is deleted. However, the team observes that CloudFormation reports an error during stack deletion, and the S3 bucket created by the stack is not deleted. How can the team resolve the error in the MOST efficient manner to ensure that all resources are deleted without errors?",
+          "options": [
+            "Add a DeletionPolicy attribute to the S3 bucket resource, with the value Delete forcing the bucket to be removed when the stack is deleted.",
+            "Add a custom resource with an AWS Lambda function with the DependsOn attribute specifying the S3 bucket, and an IAM role. Write the Lambda function to delete all objects from the bucket when RequestType is Delete.",
+            "Identify the resource that was not deleted. Manually empty the S3 bucket and then delete it.",
+            "Replace the EC2 and S3 bucket resources with a single AWS OpsWorks Stacks resource. Define a custom recipe for the stack to create and delete the EC2 instance and the S3 bucket."
+          ],
+          "correctAnswer": "B"
+        },
+        {
+          "question": "A company that uses electronic health records is running a fleet of Amazon EC2 instances with an Amazon Linux operating system. As part of patient privacy requirements, the company must ensure continuous compliance for patches for operating system and applications running on the EC2 instances. How can the deployments of the operating system and application patches be automated using a default and custom repository?",
+          "options": [
+            "Use AWS Systems Manager to create a new patch baseline including the custom repository. Run the AWS-RunPatchBaseline document using the run command to verify and install patches.",
+            "Use AWS Direct Connect to integrate the corporate repository and deploy the patches using Amazon CloudWatch scheduled events, then use the CloudWatch dashboard to create reports.",
+            "Use yum-config-manager to add the custom repository under /etc/yum.repos.d and run yum-config-manager --enable to activate the repository.",
+            "Use AWS Systems Manager to create a new patch baseline including the corporate repository. Run the AWS-AmazonLinuxDefaultPatchBaseline document using the run command to verify and install patches."
+          ],
+          "correctAnswer": "A"
+        },
+        {
+          "question": "A company wants to use AWS CloudFormation for infrastructure deployment. The company has strict tagging and resource requirements and wants to limit the deployment to two Regions. Developers will need to deploy multiple versions of the same application. Which solution ensures resources are deployed in accordance with company policy?",
+          "options": [
+            "Create AWS Trusted Advisor checks to find and remediate unapproved CloudFormation StackSets.",
+            "Create a CloudFormation drift detection operation to find and remediate unapproved CloudFormation StackSets.",
+            "Create CloudFormation StackSets with approved CloudFormation templates.",
+            "Create AWS Service Catalog products with approved CloudFormation templates."
+          ],
+          "correctAnswer": "D"
+        }
+      ]
+    }
+  ],
+  "buzzerQuestions": [
+    {
+      "question": "Which country is Argentina playing against in the World Cup Round of 32 on Saturday, July 4?",
+      "answer": "Cabo Verde"
+    },
+    {
+      "question": "What is the proposed fine for a drink and drive (DUI) violation by traffic police for Two-Wheelers?",
+      "answer": "NPR 25,000"
+    },
+    {
+      "question": "The iconic Nepali song \"Malai Nasodha Kaha Dukhchha Ghau\" was sung and composed by the legendary singer Narayan Gopal. Who is the famous poet who wrote its deeply emotional lyrics—legendarily first scribbled on a piece of cigarette packaging?",
+      "answer": "Hari Bhakta Katuwal"
+    },
+    {
+      "question": "Heading into today's matches, which two players are tied at the top of the Golden Boot race with 6 goals each?",
+      "answer": "Kylian Mbappé and Lionel Messi"
+    },
+    {
+      "question": "Who is the current Minister of Science, Technology and Innovation in Nepal?",
+      "answer": "Mahabir Pun"
+    },
+    {
+      "question": "Which international ride-sharing platform entered the Nepali market to compete directly with local favorites like Pathao and InDrive?",
+      "answer": "Yango"
+    },
+    {
+      "question": "How many mountain peaks in Nepal reach an altitude of over 8,000 meters?",
+      "answer": "8 peaks"
+    },
+    {
+      "question": "Under the current fiscal year tax slabs, the baseline 1% Social Security Tax is applied to an annual income up to what maximum amount?",
+      "answer": "NPR 10,00,000 (10 Lakh)"
+    },
+    {
+      "question": "Following the recent price cut by the Nepal Oil Corporation (NOC), what is the current retail price for a full LPG cooking gas cylinder in Nepal?",
+      "answer": "NPR 2,060"
+    },
+    {
+      "question": "Who is the current law minister of Nepal?",
+      "answer": "Sobita Gautam"
+    }
+  ]
+}

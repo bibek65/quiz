@@ -13,6 +13,7 @@
     "lint": "next lint",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:labels": "node prisma/seed-from-labels.js",
     "db:reset": "prisma db push --force-reset && npm run db:seed"
   },
   "dependencies": {

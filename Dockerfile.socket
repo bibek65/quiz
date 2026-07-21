@@ -1,0 +1,14 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+# Skip postinstall scripts — the socket server doesn't need Prisma
+RUN npm install --ignore-scripts
+
+COPY socket-server.js ./
+
+EXPOSE 4000
+
+CMD ["node", "socket-server.js"]

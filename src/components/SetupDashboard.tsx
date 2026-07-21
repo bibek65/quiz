@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, Trash2, Edit2, Save, X, ArrowRight, Users, BookOpen, HelpCircle, Zap } from 'lucide-react';
+import { Plus, Trash2, Edit2, Save, X, ArrowRight, Users, BookOpen, HelpCircle, Zap, Info } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSocket } from '@/hooks/useSocket';
@@ -34,7 +34,7 @@ export default function SetupDashboard({ quiz }: { quiz: any }) {
     answer: '', 
     options: ['', '', '', ''], 
     correctIndex: -1, 
-    optionsDefault: false 
+    optionsDefault: true 
   });
   const [buzzerData, setBuzzerData] = useState({ 
     text: '', 
@@ -75,7 +75,7 @@ export default function SetupDashboard({ quiz }: { quiz: any }) {
       filteredOptions,
       questionData.optionsDefault
     );
-    setQuestionData({ text: '', answer: '', options: ['', '', '', ''], correctIndex: -1, optionsDefault: false });
+    setQuestionData({ text: '', answer: '', options: ['', '', '', ''], correctIndex: -1, optionsDefault: true });
     router.refresh();
   };
 
@@ -90,7 +90,7 @@ export default function SetupDashboard({ quiz }: { quiz: any }) {
 
   return (
     <div className="min-h-screen p-4 md:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         {/* Header */}
         <Card variant="elevated">
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
@@ -492,25 +492,42 @@ export default function SetupDashboard({ quiz }: { quiz: any }) {
                     placeholder={`Option ${String.fromCharCode(65 + i)}`}
                     required
                   />
+                  {questionData.options.length > 2 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newOpts = questionData.options.filter((_, idx) => idx !== i);
+                        let newCorrectIndex = questionData.correctIndex;
+                        if (i === questionData.correctIndex) newCorrectIndex = -1;
+                        else if (i < questionData.correctIndex) newCorrectIndex--;
+                        setQuestionData({ ...questionData, options: newOpts, correctIndex: newCorrectIndex });
+                      }}
+                      className="px-2 py-2 text-red-400 hover:text-red-300"
+                      title="Remove option"
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
               ))}
+              <button
+                type="button"
+                onClick={() => setQuestionData({ ...questionData, options: [...questionData.options, ''] })}
+                className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1"
+              >
+                + Add Option ({String.fromCharCode(65 + questionData.options.length)})
+              </button>
             </div>
             
             <Card variant="info">
               <div className="flex items-start gap-3">
-                <input
-                  type="checkbox"
-                  id="optionsDefault"
-                  checked={questionData.optionsDefault}
-                  onChange={(e) => setQuestionData({ ...questionData, optionsDefault: e.target.checked })}
-                  className="w-5 h-5 mt-0.5 text-blue-600 bg-slate-900 border-slate-700 rounded focus:ring-2 focus:ring-blue-500"
-                />
-                <label htmlFor="optionsDefault" className="flex-1">
+                <Info className="w-5 h-5 text-blue-400 mt-0.5" />
+                <div>
                   <span className="font-medium text-blue-300">Multiple Choice Question</span>
                   <p className="text-xs text-slate-400 mt-1">
-                    Options shown by default • Cannot be passed • +10 correct / -5 incorrect
+                    Options shown by default • +10 correct / -5 incorrect
                   </p>
-                </label>
+                </div>
               </div>
             </Card>
             
