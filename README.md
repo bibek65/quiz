@@ -14,16 +14,22 @@ Modern real-time multiplayer quiz application built with Next.js 14 App Router, 
 
 ## Quick Start
 
+> **New to this project?** [`RUNBOOK.md`](RUNBOOK.md) has plain-language, step-by-step instructions for running the app locally, loading quiz questions, sharing it with people over a free Cloudflare Tunnel (no `/etc/hosts` editing needed), and how hosts/participants actually use it. Start there.
+
 ### Local development
 
 ```bash
 # Start the full stack (app, socket, postgres, nginx)
-docker compose up -d
+docker compose -f docker-compose.dev.yml up -d --build
 
 # Push database schema
-docker compose --profile migrate run --rm migrate
+docker compose -f docker-compose.dev.yml --profile migrate run --rm migrate
 
-# Open http://quiz.local (add quiz.local and socket.local to /etc/hosts)
+# Load quiz content — sample data, or your own via prisma/examples/quiz_seed.json as a template
+npm run db:seed
+# or: docker compose -f docker-compose.dev.yml exec -T app node prisma/seed-from-labels.js prisma/examples/quiz_seed.json
+
+# Open http://localhost:8080 (nginx is the single entrypoint — merges app + Socket.IO traffic)
 ```
 
 ### Usage
@@ -45,7 +51,10 @@ nextjs-quiz/
 │   └── lib/              # Server actions, DB, session
 ├── prisma/
 │   ├── schema.prisma     # Database schema
-│   └── seed.ts           # Sample quiz data
+│   ├── seed.ts           # Sample quiz data
+│   ├── seed-from-labels.js # Seed real quiz content from a JSON file
+│   └── examples/quiz_seed.json # Working example for seed-from-labels.js
+├── RUNBOOK.md            # Step-by-step guide: run, seed, share, host, play
 ├── scripts/              # Deployment helper scripts
 ├── server.js             # Integrated Next.js + Socket.IO server
 ├── socket-server.js      # Standalone Socket.IO server
@@ -67,13 +76,15 @@ nextjs-quiz/
 ### Local development
 
 ```env
-DATABASE_URL="postgresql://quizuser:quizpass@localhost:5432/quizdb?schema=public"
+DATABASE_URL="postgresql://quizuser:quizpass@postgres:5432/quizdb?schema=public"
 SESSION_SECRET="your-secret-key-min-32-chars"
 HOST_PASSWORD="admin123"
 
-NEXT_PUBLIC_SOCKET_URL="http://socket.local"
+# Leave NEXT_PUBLIC_SOCKET_URL unset — the client falls back to
+# window.location.origin, so the same build works over LAN IPs and
+# tunnel URLs (ngrok/Cloudflare) alike, without a rebuild per environment.
 NEXT_PUBLIC_SOCKET_PATH="/socket.io"
-SOCKET_EMIT_URL="http://socket:4000/emit"
+ALLOWED_ORIGIN="*"
 ```
 
 ### Production

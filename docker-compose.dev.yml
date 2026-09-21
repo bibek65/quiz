@@ -4,13 +4,13 @@ services:
       context: .
       dockerfile: Dockerfile.dev
       args:
-        - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-http://192.168.16.132:8080}
+        - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-}
         - NEXT_PUBLIC_SOCKET_PATH=${NEXT_PUBLIC_SOCKET_PATH:-/socket.io}
     environment:
       - DATABASE_URL=postgresql://quizuser:quizpass@postgres:5432/quizdb?schema=public
       - SESSION_SECRET=${SESSION_SECRET:-local-dev-secret}
       - HOST_PASSWORD=${HOST_PASSWORD:-admin123}
-      - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-http://192.168.16.132:8080}
+      - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-}
       - NEXT_PUBLIC_SOCKET_PATH=${NEXT_PUBLIC_SOCKET_PATH:-/socket.io}
       - SOCKET_EMIT_URL=http://socket:4000/emit
       - ALLOWED_ORIGIN=${ALLOWED_ORIGIN:-*}
