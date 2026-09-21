@@ -149,7 +149,7 @@ export default function SpectatorView({ quiz: initialQuiz }: { quiz: Quiz }) {
   };
 
   useEffect(() => {
-    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:4000';
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || window.location.origin;
     const socketPath = process.env.NEXT_PUBLIC_SOCKET_PATH || '/socket.io';
     const socketInstance = io(socketUrl, { 
       path: socketPath,

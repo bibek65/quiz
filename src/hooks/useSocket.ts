@@ -18,7 +18,7 @@ export function useSocket(quizId: string) {
       socketRef.current.disconnect();
     }
 
-    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:4000';
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || window.location.origin;
     const socketPath = process.env.NEXT_PUBLIC_SOCKET_PATH || '/socket.io';
     socketRef.current = io(socketUrl, {
       path: socketPath,
